@@ -9,6 +9,9 @@
 # Python environment
 venv
 
+# Media
+resources
+
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
 *.pyc
