@@ -1,0 +1,25 @@
+# IDE settings
+.idea
+.vscode
+.eclipse
+
+# IPython
+.ipynb_checkpoints
+
+# Python environment
+venv
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+*.pyc
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyBuilder
+target/
