@@ -8,7 +8,7 @@ import time
 from numpy import sqrt
 
 
-def output_cut_video(path_in1, path_in2, path_out):
+def union_2_videos_in_frame(path_in1, path_in2, path_out):
     input_container = av.open(path_in1)
     input_container2 = av.open(path_in2)
     output_container = av.open(path_out, 'w')
@@ -37,10 +37,7 @@ def output_cut_video(path_in1, path_in2, path_out):
     frames = arr
     size = len(arr) if len(arr) < len(arr2) else len(arr2)
 
-    print(arr.shape)
     arr = arr[:, :, ::2, ]
-
-    print(arr.shape)
     arr2 = arr2[:, :, ::2, ]
 
     for i in range(size):
@@ -53,4 +50,3 @@ def output_cut_video(path_in1, path_in2, path_out):
     output_container.close()
 
 
-output_cut_video('resources/lr1_1.avi', 'resources/lr1_2.avi', 'resources/out_lr1_12.avi')

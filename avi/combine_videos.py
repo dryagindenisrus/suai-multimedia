@@ -5,19 +5,26 @@ from avi.avi import collect_packets, process_packets_for_long_video, close_conta
 
 
 def combine_videos(input_files: List[str], output_file: str):
-    """Combine two video files into one long video."""
-    container1 = av.open(input_files[0])
-    container2 = av.open(input_files[1])
+    """Combine video files into one long video."""
+
+    containers = []
+    for container in input_files:
+        current_container = av.open(container)
+        containers.append(current_container)
+
+    try:
+        in_stream = containers[0].streams.video[0]
+    except Exception:
+        raise Exception('Error while reading inputs file(s)')
+
     long_container = av.open(output_file, "w")
+    long_container.add_stream(template=in_stream)
 
-    in_stream1 = container1.streams.video[0]
-    packets1 = collect_packets(container1, in_stream1)
+    packets = []
+    for container in containers:
+        packets.extend(collect_packets(container, in_stream))
 
-    in_stream2 = container2.streams.video[0]
-    packets2 = collect_packets(container2, in_stream2)
-
-    all_packets = packets1 + packets2
-    long_video_packets = process_packets_for_long_video(all_packets)
+    long_video_packets = process_packets_for_long_video(packets)
 
     mux_packets(long_container, long_video_packets)
-    close_containers([container1, container2, long_container])
+    close_containers([*containers, long_container])

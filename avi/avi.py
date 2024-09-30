@@ -1,7 +1,3 @@
-import av
-from typing import List
-
-
 def collect_packets(container, in_stream):
     """Collect video packets from the container's video stream."""
     packets = []
