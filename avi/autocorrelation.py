@@ -3,10 +3,8 @@ import av
 from av.video.frame import VideoFrame
 from matplotlib import pyplot as plt
 from numpy import sqrt
+import matplotlib
 
-K_R = 0.299
-K_B = 0.114
-K_G = 0.587
 last_height = None
 last_width = None
 last_numb_frames = None
@@ -59,50 +57,48 @@ def output_video(path, array_list, format_container_name, format_frame_name, cod
 def autocorrelation(Y_array, width, height, quantity_frames):
     """Calculates the autocorrelation of the given array."""
     print(f"Autocorrelation start working, data:\nwidth: {width}\nheight: {height}\nquantity_frames: {quantity_frames}")
+
     K = width * height
     offset = -quantity_frames + 1
     list_R = []
 
     while offset < quantity_frames:
-        cur_R = 0
-
+        # Create copies of the original array
         Y1 = Y_array.copy()
         Y2 = Y_array.copy()
 
         if offset > 0:
-            Y1 = Y1[int(K) * offset:]
-            Y2 = Y2[:-int(K) * offset]
+            Y1 = Y1[int(K) * offset:]  # Remove leading elements from Y1
+            Y2 = Y2[:-int(K) * offset]  # Remove trailing elements from Y2
         elif offset < 0:
-            Y1 = Y1[:-int(K) * offset]
-            Y2 = Y2[int(K) * offset:]
+            Y1 = Y1[:-int(K) * abs(offset)]  # Remove trailing elements from Y1
+            Y2 = Y2[int(K) * abs(offset):]  # Remove leading elements from Y2
 
-        len_Y1, len_Y2 = len(Y1), len(Y2)
-
-        if len_Y1 == 0 or len_Y2 == 0:
-            print(f"Warning: One of the arrays is empty after offset adjustment for offset {offset}.")
+        # Ensure both arrays are of the same length for correlation calculation
+        min_length = min(len(Y1), len(Y2))
+        if min_length == 0:
             list_R.append(0)  # Append a default value if arrays are empty
+            print(f"Warning: One of the arrays is empty after offset adjustment for offset {offset}.")
             offset += 1
             continue
+
+        # Trim both arrays to the same length
+        Y1 = Y1[:min_length]
+        Y2 = Y2[:min_length]
 
         M_Y1 = math_exp(Y1)
         M_Y2 = math_exp(Y2)
         sigma_Y1 = sigma(Y1, M_Y1)
         sigma_Y2 = sigma(Y2, M_Y2)
 
-        # Ensure we do not exceed the lengths of the arrays
-        max_length = min(len_Y1, len_Y2)
-
-        for j in range(max_length):
-            cur_R += (Y1[j] - M_Y1) * (Y2[j] - M_Y2)
+        cur_R = np.sum((Y1 - M_Y1) * (Y2 - M_Y2))  # Calculate correlation
 
         if K * (quantity_frames - abs(offset)) > 0:
             cur_R /= (K * (quantity_frames - abs(offset)) * sigma_Y1 * sigma_Y2)
 
         list_R.append(cur_R)
-        print(f"Offset {offset} complete")
         offset += 1
 
-    print("Autocorrelation stop working\n")
     return list_R
 
 
@@ -118,24 +114,29 @@ def sigma(array, mean_exp):
 
 def RGBtoY_str(array_list):
     """Converts RGB frames to Y channel."""
+
+    K_R = 0.299
+    K_B = 0.114
+    K_G = 0.587
+
     Y_list = [K_R * RGB[0] + K_G * RGB[1] + K_B * RGB[2]
               for array in array_list
               for str_ar in array
               for RGB in str_ar]
+
     return np.array(Y_list, dtype='float')
 
 
-if __name__ == "__main__":
-    video_files = [
-        'C:\\Users\\dryag\\Documents\\suai-multimedia\\resources\\lr1_1.AVI',
-        'C:\\Users\\dryag\\Documents\\suai-multimedia\\resources\\lr1_2.AVI',
-        'C:\\Users\\dryag\\Documents\\suai-multimedia\\resources\\lr1_3.AVI'
-    ]
+def calculate_autocorrelation(*video_files: str):
+    matplotlib.use('TkAgg')
 
     for video_file in video_files:
         args = input_video(video_file, 'rgb24')
-        plt.plot(range(-last_numb_frames + 1, last_numb_frames),
-                 autocorrelation(RGBtoY_str(args[0]), last_width, last_height, last_numb_frames),
+
+        # Calculate autocorrelation using the updated function.
+        autocorr_values = autocorrelation(RGBtoY_str(args[0]), last_width, last_height, last_numb_frames)
+
+        plt.plot(range(-last_numb_frames + 1, last_numb_frames), autocorr_values,
                  label=f"R for {video_file.split('/')[-1]}")
 
     plt.ylabel("R")
@@ -143,5 +144,3 @@ if __name__ == "__main__":
     plt.grid()
     plt.legend()
     plt.show()
-
-
